@@ -25,7 +25,7 @@ namespace TP.ConcurrentProgramming.PresentationView
       MainWindowViewModel viewModel = (MainWindowViewModel)DataContext;
       double screenWidth = SystemParameters.PrimaryScreenWidth;
       double screenHeight = SystemParameters.PrimaryScreenHeight;
-      viewModel.Start(random.Next(5, 10));
+      viewModel.Start();
     }
 
     /// <summary>
@@ -38,5 +38,10 @@ namespace TP.ConcurrentProgramming.PresentationView
         viewModel.Dispose();
       base.OnClosed(e);
     }
-  }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+    }
 }

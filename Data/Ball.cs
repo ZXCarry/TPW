@@ -39,10 +39,20 @@ namespace TP.ConcurrentProgramming.Data
       NewPositionNotification?.Invoke(this, Position);
     }
 
-    internal void Move(Vector delta)
+    internal void Move(float diameter, float boardWidth, float boardHeight, float borderThickness)
     {
-      Position = new Vector(Position.x + delta.x, Position.y + delta.y);
-      RaiseNewPositionChangeNotification();
+            Position = new Vector(Position.x + Velocity.x, Position.y + Velocity.y);
+
+            if (Position.x <= 0 || Position.x >= boardWidth - diameter - borderThickness)  //boardwidth = 400 - 20 - 8
+            {
+                Velocity = new Vector(-Velocity.x, Velocity.y);
+            }
+
+            if (Position.y <= 0 || Position.y >= boardHeight - diameter - borderThickness) //boardheight = 420 - 20 - 8
+            {
+                Velocity = new Vector(Velocity.x, -Velocity.y);
+            }
+            RaiseNewPositionChangeNotification();
     }
 
     #endregion private

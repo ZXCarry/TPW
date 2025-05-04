@@ -20,15 +20,20 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
     {
       BusinessLogicAbstractAPI instance1 = BusinessLogicAbstractAPI.GetBusinessLogicLayer();
       BusinessLogicAbstractAPI instance2 = BusinessLogicAbstractAPI.GetBusinessLogicLayer();
+
       Assert.AreSame(instance1, instance2);
+
       instance1.Dispose();
+
       Assert.ThrowsException<ObjectDisposedException>(() => instance2.Dispose());
     }
 
     [TestMethod]
     public void GetDimensionsTestMethod()
     {
-      Assert.AreEqual<Dimensions>(new(10.0, 10.0, 10.0), BusinessLogicAbstractAPI.GetDimensions);
+      Dimensions expected = new(20.0, 420.0, 400.0);
+      Dimensions actual = BusinessLogicAbstractAPI.DefaultDimensions;
+      Assert.AreEqual(expected, actual);
     }
   }
 }

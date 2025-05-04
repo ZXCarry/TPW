@@ -10,7 +10,7 @@
 
 namespace TP.ConcurrentProgramming.BusinessLogic
 {
-  internal record Position : IPosition
+  public record Position : IPosition
   {
     #region IPosition
 

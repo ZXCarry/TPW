@@ -27,33 +27,40 @@ namespace TP.ConcurrentProgramming.Data
     public event EventHandler<IVector>? NewPositionNotification;
 
     public IVector Velocity { get; set; }
+    public IVector Position { get; private set; }
 
     #endregion IBall
 
+    public void UpdatePosition(Vector newPosition)
+    {
+        Position = newPosition;
+        RaiseNewPositionChangeNotification();
+    }
+
     #region private
 
-    private Vector Position;
+    //private Vector Position;
 
     private void RaiseNewPositionChangeNotification()
     {
       NewPositionNotification?.Invoke(this, Position);
     }
 
-    internal void Move(float diameter, float boardWidth, float boardHeight, float borderThickness)
-    {
-            Position = new Vector(Position.x + Velocity.x, Position.y + Velocity.y);
+    //internal void Move(float diameter, float boardWidth, float boardHeight, float borderThickness)
+    //{
+    //        Position = new Vector(Position.x + Velocity.x, Position.y + Velocity.y);
 
-            if (Position.x <= 0 || Position.x >= boardWidth - diameter - borderThickness)  //boardwidth = 400 - 20 - 8
-            {
-                Velocity = new Vector(-Velocity.x, Velocity.y);
-            }
+    //        if (Position.x <= 0 || Position.x >= boardWidth - diameter - borderThickness)  //boardwidth = 400 - 20 - 8
+    //        {
+    //            Velocity = new Vector(-Velocity.x, Velocity.y);
+    //        }
 
-            if (Position.y <= 0 || Position.y >= boardHeight - diameter - borderThickness) //boardheight = 420 - 20 - 8
-            {
-                Velocity = new Vector(Velocity.x, -Velocity.y);
-            }
-            RaiseNewPositionChangeNotification();
-    }
+    //        if (Position.y <= 0 || Position.y >= boardHeight - diameter - borderThickness) //boardheight = 420 - 20 - 8
+    //        {
+    //            Velocity = new Vector(Velocity.x, -Velocity.y);
+    //        }
+    //        RaiseNewPositionChangeNotification();
+    //}
 
     #endregion private
   }

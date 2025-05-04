@@ -8,6 +8,9 @@
 //
 //_____________________________________________________________________________________________________________________________________
 
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using TP.ConcurrentProgramming.BusinessLogic;
 using TP.ConcurrentProgramming.Data;
 
 namespace TP.ConcurrentProgramming.BusinessLogic.Test
@@ -18,105 +21,112 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
     [TestMethod]
     public void ConstructorTestMethod()
     {
-      using (BusinessLogicImplementation newInstance = new(new DataLayerConstructorFixcure()))
-      {
-        bool newInstanceDisposed = true;
-        newInstance.CheckObjectDisposed(x => newInstanceDisposed = x);
-        Assert.IsFalse(newInstanceDisposed);
-      }
+      using BusinessLogicImplementation newInstance = new(new DataLayerConstructorFixture());
+      bool newInstanceDisposed = true;
+      newInstance.CheckObjectDisposed(x => newInstanceDisposed = x);
+      Assert.IsFalse(newInstanceDisposed);
     }
 
     [TestMethod]
     public void DisposeTestMethod()
     {
-      DataLayerDisposeFixcure dataLayerFixcure = new DataLayerDisposeFixcure();
-      BusinessLogicImplementation newInstance = new(dataLayerFixcure);
-      Assert.IsFalse(dataLayerFixcure.Disposed);
+      DataLayerDisposeFixture dataLayerFixture = new();
+      BusinessLogicImplementation newInstance = new(dataLayerFixture);
+
+      Assert.IsFalse(dataLayerFixture.Disposed);
+
       bool newInstanceDisposed = true;
       newInstance.CheckObjectDisposed(x => newInstanceDisposed = x);
       Assert.IsFalse(newInstanceDisposed);
+
       newInstance.Dispose();
       newInstance.CheckObjectDisposed(x => newInstanceDisposed = x);
       Assert.IsTrue(newInstanceDisposed);
+
       Assert.ThrowsException<ObjectDisposedException>(() => newInstance.Dispose());
-      Assert.ThrowsException<ObjectDisposedException>(() => newInstance.Start(0, (position, ball) => { }));
-      Assert.IsTrue(dataLayerFixcure.Disposed);
+      Assert.ThrowsException<ObjectDisposedException>(() => newInstance.Start(0, (_, _) => { }));
+      Assert.IsTrue(dataLayerFixture.Disposed);
     }
 
     [TestMethod]
     public void StartTestMethod()
     {
-      DataLayerStartFixcure dataLayerFixcure = new();
-      using (BusinessLogicImplementation newInstance = new(dataLayerFixcure))
+      DataLayerStartFixture dataLayerFixture = new();
+      using BusinessLogicImplementation newInstance = new(dataLayerFixture);
+      int callbackCount = 0;
+      int expectedBallCount = 10;
+
+      newInstance.Start(expectedBallCount, (pos, ball) =>
       {
-        int called = 0;
-        int numberOfBalls2Create = 10;
-        newInstance.Start(
-          numberOfBalls2Create,
-          (startingPosition, ball) => { called++; Assert.IsNotNull(startingPosition); Assert.IsNotNull(ball); });
-        Assert.AreEqual<int>(1, called);
-        Assert.IsTrue(dataLayerFixcure.StartCalled);
-        Assert.AreEqual<int>(numberOfBalls2Create, dataLayerFixcure.NumberOfBallseCreated);
-      }
+        callbackCount++;
+        Assert.IsNotNull(pos);
+        Assert.IsNotNull(ball);
+      });
+
+      Assert.AreEqual(1, callbackCount);
+      Assert.IsTrue(dataLayerFixture.StartCalled);
+      Assert.AreEqual(expectedBallCount, dataLayerFixture.NumberOfBallsCreated);
     }
 
-    #region testing instrumentation
+    #region Fixtures
 
-    private class DataLayerConstructorFixcure : Data.DataAbstractAPI
+    private class DataLayerConstructorFixture : TP.ConcurrentProgramming.Data.DataAbstractAPI
     {
-      public override void Dispose()
-      { }
+      public override void Dispose() { }
 
-      public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
+      public override void Start(int numberOfBalls, Action<TP.ConcurrentProgramming.Data.IVector, TP.ConcurrentProgramming.Data.IBall> upperLayerHandler)
       {
         throw new NotImplementedException();
       }
     }
 
-    private class DataLayerDisposeFixcure : Data.DataAbstractAPI
+    private class DataLayerDisposeFixture : TP.ConcurrentProgramming.Data.DataAbstractAPI
     {
       internal bool Disposed = false;
 
-      public override void Dispose()
-      {
-        Disposed = true;
-      }
+      public override void Dispose() => Disposed = true;
 
-      public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
+      public override void Start(int numberOfBalls, Action<TP.ConcurrentProgramming.Data.IVector, TP.ConcurrentProgramming.Data.IBall> upperLayerHandler)
       {
         throw new NotImplementedException();
       }
     }
 
-    private class DataLayerStartFixcure : Data.DataAbstractAPI
+    private class DataLayerStartFixture : TP.ConcurrentProgramming.Data.DataAbstractAPI
     {
       internal bool StartCalled = false;
-      internal int NumberOfBallseCreated = -1;
+      internal int NumberOfBallsCreated = -1;
 
-      public override void Dispose()
-      { }
+      public override void Dispose() { }
 
-      public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
+      public override void Start(int numberOfBalls, Action<TP.ConcurrentProgramming.Data.IVector, TP.ConcurrentProgramming.Data.IBall> upperLayerHandler)
       {
         StartCalled = true;
-        NumberOfBallseCreated = numberOfBalls;
+        NumberOfBallsCreated = numberOfBalls;
         upperLayerHandler(new DataVectorFixture(), new DataBallFixture());
       }
 
-      private record DataVectorFixture : Data.IVector
+      private record DataVectorFixture : TP.ConcurrentProgramming.Data.IVector
       {
-        public double x { get; init; }
-        public double y { get; init; }
+        public double x { get; init; } = 5.0;
+        public double y { get; init; } = 10.0;
       }
 
-      private class DataBallFixture : Data.IBall
+      private class DataBallFixture : TP.ConcurrentProgramming.Data.IBall
       {
-        public IVector Velocity { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        public TP.ConcurrentProgramming.Data.IVector Velocity { get; set; } = new TP.ConcurrentProgramming.Data.Vector(1.0, 1.0);
+        public TP.ConcurrentProgramming.Data.IVector Position { get; private set; } = new TP.ConcurrentProgramming.Data.Vector(0.0, 0.0);
 
-        public event EventHandler<IVector>? NewPositionNotification = null;
+        public event EventHandler<TP.ConcurrentProgramming.Data.IVector>? NewPositionNotification;
+
+        public void UpdatePosition(TP.ConcurrentProgramming.Data.Vector newPosition)
+        {
+          Position = newPosition;
+          NewPositionNotification?.Invoke(this, newPosition);
+        }
       }
     }
 
-    #endregion testing instrumentation
+    #endregion Fixtures
   }
 }

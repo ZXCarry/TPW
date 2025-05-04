@@ -12,9 +12,13 @@ namespace TP.ConcurrentProgramming.BusinessLogic
 {
   internal class Ball : IBall
   {
+
+    private readonly Data.IBall ball;
+
     public Ball(Data.IBall ball)
     {
-      ball.NewPositionNotification += RaisePositionChangeEvent;
+    this.ball = ball;
+    ball.NewPositionNotification += RaisePositionChangeEvent;
     }
 
     #region IBall
@@ -31,5 +35,23 @@ namespace TP.ConcurrentProgramming.BusinessLogic
     }
 
     #endregion private
+
+    public void Move(float diameter, float boardWidth, float boardHeight, float borderThickness)
+    {
+    var pos = ball.Position;
+    var vel = ball.Velocity;
+
+    var newX = pos.x + vel.x;
+    var newY = pos.y + vel.y;
+
+    if (newX <= 0 || newX >= boardWidth - diameter - borderThickness)
+        vel = new Data.Vector(-vel.x, vel.y);
+
+    if (newY <= 0 || newY >= boardHeight - diameter - borderThickness)
+        vel = new Data.Vector(vel.x, -vel.y);
+
+    ball.Velocity = vel;
+    ball.UpdatePosition(new Data.Vector(newX, newY));
+    }
   }
 }

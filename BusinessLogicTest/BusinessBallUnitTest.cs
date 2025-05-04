@@ -16,33 +16,56 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
     [TestMethod]
     public void MoveTestMethod()
     {
-      DataBallFixture dataBallFixture = new DataBallFixture();
+      DataBallFixture dataBallFixture = new();
       Ball newInstance = new(dataBallFixture);
       int numberOfCallBackCalled = 0;
-      newInstance.NewPositionNotification += (sender, position) => { Assert.IsNotNull(sender); Assert.IsNotNull(position); numberOfCallBackCalled++; };
-      dataBallFixture.Move();
-      Assert.AreEqual<int>(1, numberOfCallBackCalled);
+
+      newInstance.NewPositionNotification += (sender, position) =>
+      {
+        Assert.IsNotNull(sender);
+        Assert.IsNotNull(position);
+        numberOfCallBackCalled++;
+      };
+
+      dataBallFixture.SimulateMove();
+      Assert.AreEqual(1, numberOfCallBackCalled);
     }
 
-    #region testing instrumentation
+        #region testing instrumentation
 
-    private class DataBallFixture : Data.IBall
+        private class DataBallFixture : Data.IBall
+        {
+            public DataBallFixture()
+            {
+                Velocity = new Data.Vector(1.0, 1.0);
+                Position = new Data.Vector(0.0, 0.0);
+            }
+
+            public Data.IVector Velocity { get; set; }
+            public Data.IVector Position { get; private set; }
+
+            public event EventHandler<Data.IVector>? NewPositionNotification;
+
+            public void UpdatePosition(Data.Vector newPosition)
+            {
+                Position = newPosition;
+                NewPositionNotification?.Invoke(this, newPosition);
+            }
+
+            internal void SimulateMove()
+            {
+                double newX = Position.x + Velocity.x;
+                double newY = Position.y + Velocity.y;
+                UpdatePosition(new Data.Vector(newX, newY));
+            }
+        }
+
+        private class VectorFixture : Data.IVector
     {
-      public Data.IVector Velocity { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-      public event EventHandler<Data.IVector>? NewPositionNotification;
-
-      internal void Move()
+      public VectorFixture(double X, double Y)
       {
-        NewPositionNotification?.Invoke(this, new VectorFixture(0.0, 0.0));
-      }
-    }
-
-    private class VectorFixture : Data.IVector
-    {
-      internal VectorFixture(double X, double Y)
-      {
-        x = X; y = Y;
+        x = X;
+        y = Y;
       }
 
       public double x { get; init; }

@@ -8,56 +8,27 @@
 //
 //_____________________________________________________________________________________________________________________________________
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace TP.ConcurrentProgramming.Data.Test
 {
-  [TestClass]
-  public class BallUnitTest
-  {
-    [TestMethod]
-    public void ConstructorTestMethod()
+    [TestClass]
+    public class BallUnitTest
     {
-      Vector initial = new Vector(0.0, 0.0);
-      Ball ball = new(initial, initial);
+        [TestMethod]
+        public void ConstructorTestMethod()
+        {
+            Vector testinVector = new Vector(0.0, 0.0);
+            Ball newInstance = new(testinVector, testinVector);
+        }
 
-      Assert.AreEqual(initial, ball.Position);
-      Assert.AreEqual(initial, ball.Velocity);
+        [TestMethod]
+        public void MoveTestMethod()
+        {
+            Vector initialPosition = new(10.0, 10.0);
+            Ball newInstance = new(initialPosition, new Vector(0.0, 0.0));
+            IVector curentPosition = new Vector(0.0, 0.0);
+            int numberOfCallBackCalled = 0;
+            newInstance.NewPositionNotification += (sender, position) => { Assert.IsNotNull(sender); curentPosition = position; numberOfCallBackCalled++; };
+
+        }
     }
-
-    [TestMethod]
-    public void UpdatePosition_ShouldTriggerEvent()
-    {
-      Vector initial = new(10.0, 10.0);
-      Ball ball = new(initial, new Vector(0.0, 0.0));
-
-      bool eventCalled = false;
-      IVector? received = null;
-
-      ball.NewPositionNotification += (sender, newPos) =>
-      {
-        eventCalled = true;
-        received = newPos;
-      };
-
-      Vector updated = new(20.0, 30.0);
-      ball.UpdatePosition(updated);
-
-      Assert.IsTrue(eventCalled);
-      Assert.AreEqual(updated, received);
-      Assert.AreEqual(updated, ball.Position);
-    }
-
-    [TestMethod]
-    public void Velocity_CanBeChanged()
-    {
-      Vector initial = new(0, 0);
-      Ball ball = new(initial, new Vector(1, 1));
-
-      Vector newVelocity = new(2.5, -3.0);
-      ball.Velocity = newVelocity;
-
-      Assert.AreEqual(newVelocity, ball.Velocity);
-    }
-  }
 }

@@ -8,50 +8,127 @@
 //
 //_____________________________________________________________________________________________________________________________________
 
+using TP.ConcurrentProgramming.Data;
+using System.IO;
+
 namespace TP.ConcurrentProgramming.BusinessLogic
 {
-  internal class Ball : IBall
-  {
-
-    private readonly Data.IBall ball;
-
-    public Ball(Data.IBall ball)
+    internal class Ball : IBall
     {
-    this.ball = ball;
-    ball.NewPositionNotification += RaisePositionChangeEvent;
+        public Ball(Data.IBall ball, List<Data.IBall> ballList)
+        {
+            ball.NewPositionNotification += RaisePositionChangeEvent;
+            ball.NewPositionNotification += (sender, position) => collisions(position, ball);
+            this.ballList = ballList;
+        }
+
+        #region IBall
+
+        public event EventHandler<IPosition>? NewPositionNotification;
+
+        #endregion IBall
+
+        #region private
+
+        private List<Data.IBall> ballList;
+
+        private void RaisePositionChangeEvent(object? sender, Data.IVector e)
+        {
+            NewPositionNotification?.Invoke(this, new Position(e.x, e.y));
+        }
+
+        private void collisions(IVector Position, Data.IBall ball)
+        {
+            bool lockWasTaken = false;
+            try
+            {
+                Monitor.Enter(this, ref lockWasTaken);
+                if (!lockWasTaken)
+                    throw new ArgumentException();
+                bool bounceX = (Position.x + ball.Velocity.x <= 0) || (Position.x + ball.Velocity.x >= 400 - 20 - 8);
+                bool bounceY = (Position.y + ball.Velocity.y <= 0) || (Position.y + ball.Velocity.y >= 420 - 20 - 8);
+
+                // Odwróć prędkość jeśli kolizja
+                if (bounceX)
+                {
+                    ball.SetVelocty(-ball.Velocity.x, ball.Velocity.y);
+                }
+
+                if (bounceY) ball.SetVelocty(ball.Velocity.x, -ball.Velocity.y);
+
+                foreach (Data.IBall other in ballList)
+                {
+                    if (other == this) continue;
+
+                    double x1 = ball.getPos().x;
+                    double y1 = ball.getPos().y;
+
+                    double x2 = other.getPos().x;
+                    double y2 = other.getPos().y;
+
+                    double dx = x1 - x2;
+                    double dy = y1 - y2;
+
+                    double euclideanDistance = Math.Sqrt(dx * dx + dy * dy);
+                    double minDistance = (20 + 20) / 2;
+
+                    if (euclideanDistance > 0 && euclideanDistance < minDistance)
+                    {
+
+                        double nx = dx / euclideanDistance;
+                        double ny = dy / euclideanDistance;
+
+                        //Velocity
+                        double v1x = ball.Velocity.x;
+                        double v1y = ball.Velocity.y;
+                        double v2x = other.Velocity.x;
+                        double v2y = other.Velocity.y;
+
+                        //Mass
+                        double m1 = 1;
+                        double m2 = 1;
+
+                        //product of Velocity and normal
+                        double v1n = v1x * nx + v1y * ny;
+                        double v2n = v2x * nx + v2y * ny;
+
+                        double v1nAfter = (v1n * (m1 - m2) + 2 * m2 * v2n) / (m1 + m2);
+                        double v2nAfter = (v2n * (m2 - m1) + 2 * m1 * v1n) / (m1 + m2);
+
+                        double dv1x = (v1nAfter - v1n) * nx;
+                        double dv1y = (v1nAfter - v1n) * ny;
+                        double dv2x = (v2nAfter - v2n) * nx;
+                        double dv2y = (v2nAfter - v2n) * ny;
+
+                        ball.SetVelocty(ball.Velocity.x + dv1x, ball.Velocity.y);
+                        ball.SetVelocty(ball.Velocity.x, ball.Velocity.y + dv1y);
+                        other.SetVelocty(other.Velocity.x + dv2x, other.Velocity.y);
+                        other.SetVelocty(other.Velocity.x, other.Velocity.y + dv2y);
+
+                        double overlap = minDistance - euclideanDistance;
+                        if (overlap > 0)
+                        {
+                            double adjustX = nx * overlap * 0.5;
+                            double adjustY = ny * overlap * 0.5;
+
+                            ball.setPos(ball.getPos().x + adjustX, ball.getPos().y + adjustY);
+
+                            other.setPos(other.getPos().x - adjustX, other.getPos().y - adjustY);
+                        }
+
+                    }
+
+                }
+
+            }
+            finally
+            {
+                if (lockWasTaken)
+                    Monitor.Exit(this);
+            }
+
+        }
+
+        #endregion private
     }
-
-    #region IBall
-
-    public event EventHandler<IPosition>? NewPositionNotification;
-
-    #endregion IBall
-
-    #region private
-
-    private void RaisePositionChangeEvent(object? sender, Data.IVector e)
-    {
-      NewPositionNotification?.Invoke(this, new Position(e.x, e.y));
-    }
-
-    #endregion private
-
-    public void Move(float diameter, float boardWidth, float boardHeight, float borderThickness)
-    {
-    var pos = ball.Position;
-    var vel = ball.Velocity;
-
-    var newX = pos.x + vel.x;
-    var newY = pos.y + vel.y;
-
-    if (newX <= 0 || newX >= boardWidth - diameter - borderThickness)
-        vel = new Data.Vector(-vel.x, vel.y);
-
-    if (newY <= 0 || newY >= boardHeight - diameter - borderThickness)
-        vel = new Data.Vector(vel.x, -vel.y);
-
-    ball.Velocity = vel;
-    ball.UpdatePosition(new Data.Vector(newX, newY));
-    }
-  }
 }

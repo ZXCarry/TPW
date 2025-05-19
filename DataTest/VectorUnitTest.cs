@@ -8,24 +8,20 @@
 //
 //_____________________________________________________________________________________________________________________________________
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace TP.ConcurrentProgramming.Data.Test
 {
-  [TestClass]
-  public class VectorUnitTest
-  {
-    [TestMethod]
-    public void ConstructorTestMethod()
+    [TestClass]
+    public class VectorUnitTest
     {
-      Random random = new();
-      double expectedX = random.NextDouble();
-      double expectedY = random.NextDouble();
-
-      Vector vector = new(expectedX, expectedY);
-
-      Assert.AreEqual(expectedX, vector.x, 0.000001);
-      Assert.AreEqual(expectedY, vector.y, 0.000001);
+        [TestMethod]
+        public void ConstructorTestMethod()
+        {
+            Random randomGenerator = new();
+            double XComponent = randomGenerator.NextDouble();
+            double YComponent = randomGenerator.NextDouble();
+            Vector newInstance = new(XComponent, YComponent);
+            Assert.AreEqual<double>(XComponent, newInstance.x);
+            Assert.AreEqual<double>(YComponent, newInstance.y);
+        }
     }
-  }
 }

@@ -8,30 +8,36 @@
 //
 //_____________________________________________________________________________________________________________________________________
 
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
+using System.Numerics;
 using TP.ConcurrentProgramming.Data;
+using UnderneathLayerAPI = TP.ConcurrentProgramming.Data.DataAbstractAPI;
 
 namespace TP.ConcurrentProgramming.BusinessLogic
 {
-    public class BusinessLogicImplementation : BusinessLogicAbstractAPI
+    internal class BusinessLogicImplementation : BusinessLogicAbstractAPI
     {
         #region ctor
 
-        public BusinessLogicImplementation() : this(null) { }
+        public BusinessLogicImplementation() : this(null)
+        { }
 
-        internal BusinessLogicImplementation(DataAbstractAPI? underneathLayer)
+        internal BusinessLogicImplementation(UnderneathLayerAPI? underneathLayer)
         {
-            layerBellow = underneathLayer ?? DataAbstractAPI.GetDataLayer();
-            balls = new List<Ball>();
-            updateTimer = new Timer(MoveAllBalls, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(16));
+            layerBellow = underneathLayer == null ? UnderneathLayerAPI.GetDataLayer() : underneathLayer;
         }
 
         #endregion ctor
 
         #region BusinessLogicAbstractAPI
+
+        public override void Dispose()
+        {
+            if (Disposed)
+                throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
+            layerBellow.Dispose();
+            Disposed = true;
+        }
 
         public override void Start(int numberOfBalls, Action<IPosition, IBall> upperLayerHandler)
         {
@@ -39,40 +45,21 @@ namespace TP.ConcurrentProgramming.BusinessLogic
                 throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
             if (upperLayerHandler == null)
                 throw new ArgumentNullException(nameof(upperLayerHandler));
-
-            layerBellow.Start(numberOfBalls, (startingPosition, dataBall) =>
-            {
-                var logicBall = new Ball(dataBall);
-                balls.Add(logicBall);
-                upperLayerHandler(new Position(startingPosition.x, startingPosition.y), logicBall);
+            List<Data.IBall> ballList = new();
+            layerBellow.Start(numberOfBalls, (startingPosition, databall) => {
+                IBall ball = new Ball(databall, ballList);
+                ballList.Add(databall);
+                upperLayerHandler(new Position(startingPosition.x, startingPosition.x), ball);
             });
-        }
-
-        public override void Dispose()
-        {
-            if (Disposed)
-                throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
-            updateTimer.Dispose();
-            layerBellow.Dispose();
-            Disposed = true;
         }
 
         #endregion BusinessLogicAbstractAPI
 
         #region private
 
-        private readonly DataAbstractAPI layerBellow;
-        private readonly List<Ball> balls;
-        private readonly Timer updateTimer;
         private bool Disposed = false;
 
-        private void MoveAllBalls(object? state)
-        {
-            foreach (var ball in balls)
-            {
-                ball.Move(diameter: 20, boardWidth: 400, boardHeight: 420, borderThickness: 8);
-            }
-        }
+        private readonly UnderneathLayerAPI layerBellow;
 
         #endregion private
 

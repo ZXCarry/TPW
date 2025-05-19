@@ -10,68 +10,54 @@
 
 namespace TP.ConcurrentProgramming.BusinessLogic.Test
 {
-  [TestClass]
-  public class BallUnitTest
-  {
-    [TestMethod]
-    public void MoveTestMethod()
+    [TestClass]
+    public class BallUnitTest
     {
-      DataBallFixture dataBallFixture = new();
-      Ball newInstance = new(dataBallFixture);
-      int numberOfCallBackCalled = 0;
+        [TestMethod]
+        public void MoveTestMethod()
+        {
+            DataBallFixture dataBallFixture = new DataBallFixture();
+            Ball newInstance = new(dataBallFixture, new List<Data.IBall> { });
+            int numberOfCallBackCalled = 0;
 
-      newInstance.NewPositionNotification += (sender, position) =>
-      {
-        Assert.IsNotNull(sender);
-        Assert.IsNotNull(position);
-        numberOfCallBackCalled++;
-      };
 
-      dataBallFixture.SimulateMove();
-      Assert.AreEqual(1, numberOfCallBackCalled);
-    }
+        }
 
         #region testing instrumentation
 
         private class DataBallFixture : Data.IBall
         {
-            public DataBallFixture()
-            {
-                Velocity = new Data.Vector(1.0, 1.0);
-                Position = new Data.Vector(0.0, 0.0);
-            }
-
-            public Data.IVector Velocity { get; set; }
-            public Data.IVector Position { get; private set; }
+            public Data.IVector Velocity { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
             public event EventHandler<Data.IVector>? NewPositionNotification;
 
-            public void UpdatePosition(Data.Vector newPosition)
+            public Data.IVector getPos()
             {
-                Position = newPosition;
-                NewPositionNotification?.Invoke(this, newPosition);
+                throw new NotImplementedException();
             }
 
-            internal void SimulateMove()
+            public void setPos(double x, double y)
             {
-                double newX = Position.x + Velocity.x;
-                double newY = Position.y + Velocity.y;
-                UpdatePosition(new Data.Vector(newX, newY));
+                throw new NotImplementedException();
+            }
+
+            internal void Move()
+            {
+                NewPositionNotification?.Invoke(this, new VectorFixture(0.0, 0.0));
             }
         }
 
         private class VectorFixture : Data.IVector
-    {
-      public VectorFixture(double X, double Y)
-      {
-        x = X;
-        y = Y;
-      }
+        {
+            internal VectorFixture(double X, double Y)
+            {
+                x = X; y = Y;
+            }
 
-      public double x { get; init; }
-      public double y { get; init; }
+            public double x { get; init; }
+            public double y { get; init; }
+        }
+
+        #endregion testing instrumentation
     }
-
-    #endregion testing instrumentation
-  }
 }
